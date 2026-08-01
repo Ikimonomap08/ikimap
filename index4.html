@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>生き物投稿</title>
+
+<!--ファイル変えたらここも変える-->
+<link rel="stylesheet" href="style4.css">
+
+<script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet/dist/leaflet.css">
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
+</head>
+
+<body>
+
+<h2>生き物の写真を投稿しよう！</h2>
+
+<!-- STEP1 -->
+<div id="step1">
+   <h3>📷 写真を選択</h3>
+
+ <input type="file"
+       id="photoInput"
+       accept="image/*">
+       
+ <p id="fileInfo"></p>
+ <p id="gpsInfo"></p>
+ <p id="dateInfo"></p>
+ <img id="preview">
+ 
+ <button id="nextBtn" disabled>次へ</button>
+ 
+</div>
+
+<!-- STEP2（入力画面） -->
+ 
+<div id="step2" style="display:none;">
+  <h3>🌿 観察情報を入力</h3>
+
+  <div class="form-item">
+    <label>あなたの名前 <span class="required">必須</span></label>
+    <input id="observer" placeholder="あなたの名前">
+  </div>
+
+  <div class="form-item">
+    <label>カテゴリー <span class="required">必須</span></label>
+    <select id="category">
+      <option value="bird">🐦 鳥</option>
+      <option value="bug">🐛 虫</option>
+      <option value="animal">🐾 動物</option>
+      <option value="plant">🌱 植物</option>
+      <option value="other">❓ その他</option>
+    </select>
+  </div>
+
+  <div class="form-item">
+    <label>生き物の名前</label>
+    <input id="speciesName" placeholder="例：スズメ">
+  </div>
+
+  <div class="form-item">
+    <label>ひとこと・メモ</label>
+    <textarea id="comment" placeholder="公園で見つけました！"></textarea>
+  </div>
+
+  <button id="toStep3">確認へ</button>
+</div>
+
+
+<!-- STEP3（確認＋地図） -->
+<div id="step3" style="display:none;">
+  <h3>📝 確認画面</h3>
+
+  
+  <p id="fileInfo"></p>
+  <p id="gpsInfo"></p>
+  <p id="dateInfo"></p>
+
+  <p id="confirmText"></p>
+
+  <div id="map" style="height:300px;"></div>
+
+  <button id="postBtn">投稿する</button>
+</div>
+
+<!-- STEP4（投稿完了） -->
+<div id="step4" style="display:none;">
+  <h3>🎉 投稿完了</h3>
+
+  <p>
+    生き物の投稿を受け付けました！
+  </p>
+
+  <p>
+    管理者の確認後、マップに掲載されます。
+  </p>
+</div>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!--ファイル変えたらここも変える-->
+<script src="script4.js"></script>
+
+</body>
+</html>

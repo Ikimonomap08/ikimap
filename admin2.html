@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>管理者ページ</title>
+
+  <link rel="stylesheet" href="admin2.css">
+</head>
+
+<body>
+
+  <header>
+    <h1>管理者ページ</h1>
+    <button id="logoutBtn">ログアウト</button>
+  </header>
+
+
+  <!-- ログイン画面 -->
+  <main id="loginSection">
+
+    <div class="login-card">
+
+      <h2>管理者ログイン</h2>
+
+      <input
+        type="email"
+        id="emailInput"
+        placeholder="メールアドレス"
+      >
+
+      <input
+        type="password"
+        id="passwordInput"
+        placeholder="パスワード"
+      >
+
+      <button id="loginBtn">
+        ログイン
+      </button>
+
+      <p id="loginMessage"></p>
+
+    </div>
+
+  </main>
+
+
+  <!-- 管理画面 -->
+  <main id="adminSection">
+
+    <h2>投稿管理</h2>
+
+    <p id="adminMessage"></p>
+
+    <div id="observationsList">
+      <!-- 投稿一覧がここに表示される -->
+    </div>
+
+  </main>
+
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- JavaScript -->
+  <script src="admin2.js"></script>
+
+</body>
+
+</html>
