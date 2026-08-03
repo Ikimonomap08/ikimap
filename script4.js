@@ -134,11 +134,17 @@ photoInput.addEventListener("change", function () {
         observation.longitude =
           lon[0] + lon[1] / 60 + lon[2] / 3600;
 
-          gpsInfo.innerHTML =   gpsInfo.innerHTML = `
-                          lat = ${JSON.stringify(lat)}<br>
-                          lon = ${JSON.stringify(lon)}
-                          `;
-          
+           gpsInfo.innerHTML = `
+                              lat = ${JSON.stringify(lat)}<br>
+                              lon = ${JSON.stringify(lon)}<br>
+                              <br>
+                              lat0 = ${String(lat[0])}<br>
+                              lat1 = ${String(lat[1])}<br>
+                              lat2 = ${String(lat[2])}<br>
+                              lon0 = ${String(lon[0])}<br>
+                              lon1 = ${String(lon[1])}<br>
+                              lon2 = ${String(lon[2])}
+                            `;
 
       }
 
