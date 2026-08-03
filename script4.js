@@ -107,9 +107,7 @@ photoInput.addEventListener("change", function () {
     console.log("プレビューセット完了");
     EXIF.getData(file, function () {
 
-      const allTags = EXIF.getAllTags(this);
-
-      alert(JSON.stringify(allTags));
+      
 
       const lat = EXIF.getTag(this, "GPSLatitude");
       const lon = EXIF.getTag(this, "GPSLongitude");
