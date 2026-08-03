@@ -110,6 +110,7 @@ photoInput.addEventListener("change", function () {
       const allTags = EXIF.getAllTags(this);
 
       alert(JSON.stringify(allTags));
+
       const lat = EXIF.getTag(this, "GPSLatitude");
       const lon = EXIF.getTag(this, "GPSLongitude");
 
@@ -138,6 +139,12 @@ photoInput.addEventListener("change", function () {
 
         observation.longitude =
           lon[0] + lon[1] / 60 + lon[2] / 3600;
+
+        
+        gpsInfo.innerHTML = `
+                              緯度：${observation.latitude.toFixed(6)}<br>
+                              経度：${observation.longitude.toFixed(6)}
+                            `;
 
            
 
