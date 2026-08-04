@@ -1,6 +1,7 @@
 const photoInput = document.getElementById("photoInput");
 const nextBtn = document.getElementById("nextBtn");
 const postBtn = document.getElementById("postBtn");
+const newPostBtn = document.getElementById("newPostBtn");
 const observerInput = document.getElementById("observer");
 const category = document.getElementById("category");
 const speciesInput = document.getElementById("speciesName");
@@ -22,8 +23,8 @@ const supabaseClient = supabase.createClient(
 
 let map;
 let marker;
-
 let observation = {};
+let posting = false;
 
 // =========================
 // STEP切り替え
@@ -94,7 +95,6 @@ photoInput.addEventListener("change", function () {
   // ★STEP1で表示
   fileInfo.innerHTML = `
     ファイル名: ${file.name}<br>
-    種類: ${file.type}
     
   `;
 
@@ -106,9 +106,6 @@ photoInput.addEventListener("change", function () {
 
     console.log("プレビューセット完了");
     EXIF.getData(file, function () {
-
-      
-
       const lat = EXIF.getTag(this, "GPSLatitude");
       const lon = EXIF.getTag(this, "GPSLongitude");
 
@@ -138,13 +135,9 @@ photoInput.addEventListener("change", function () {
         observation.longitude =
           lon[0] + lon[1] / 60 + lon[2] / 3600;
 
-        
-        gpsInfo.innerHTML = `
-                              緯度：${observation.latitude.toFixed(6)}<br>
-                              経度：${observation.longitude.toFixed(6)}
-                            `;
-
-           
+          gpsInfo.innerHTML = `
+          緯度：${observation.latitude.toFixed(6)}<br>
+          経度：${observation.longitude.toFixed(6)} `;
 
       }
 
@@ -166,6 +159,11 @@ nextBtn.addEventListener("click", () => {
   showStep(2);
 });
 
+// STEP2 → STEP1
+document.getElementById("backToStep1").addEventListener("click", () => {
+  showStep(1);
+});
+
 // STEP2 → STEP3（入力保存）
 toStep3.addEventListener("click", () => {
 
@@ -184,8 +182,21 @@ toStep3.addEventListener("click", () => {
   showStep(3);
 });
 
+// STEP3 → STEP2
+document.getElementById("backToStep2").addEventListener("click", () => {
+  showStep(2);
+});
+
+
+
 // 投稿しましたの確認
 postBtn.addEventListener("click", async() => {
+
+  if (posting) return;   // 2回目以降は無視
+  posting = true;
+
+  postBtn.disabled = true;
+  postBtn.textContent = "投稿中...";
   
   const file = photoInput.files[0];
 
@@ -207,6 +218,11 @@ postBtn.addEventListener("click", async() => {
 
   if (uploadError) {
     console.error("写真アップロードエラー:", uploadError);
+
+      posting = false;
+      postBtn.disabled = false;
+      postBtn.textContent = "投稿する";
+
     alert("写真のアップロードに失敗しました\n" + uploadError.message);
     return;
   }
@@ -235,6 +251,9 @@ postBtn.addEventListener("click", async() => {
 
   if (error) {
     console.error("保存エラー:", error);
+    posting = false;
+    postBtn.disabled = false;
+    postBtn.textContent = "投稿する";
     alert("投稿に失敗しました\n" + error.message);
     return;
   }
@@ -242,5 +261,46 @@ postBtn.addEventListener("click", async() => {
   console.log("保存成功:", data);
 
   showStep(4);
+
+});
+
+ // 新しい投稿のボタン
+newPostBtn.addEventListener("click", () => {
+
+  // データを初期化
+  observation = {};
+
+  // フラグを戻す
+  posting = false;
+
+  // ボタンを元に戻す
+  postBtn.disabled = false;
+  postBtn.textContent = "投稿する";
+
+  // 入力内容をリセット
+  photoInput.value = "";
+  observerInput.value = "";
+  speciesInput.value = "";
+  commentInput.value = "";
+  category.selectedIndex = 0;
+
+  // 表示をリセット
+  preview.src = "";
+  fileInfo.innerHTML = "";
+  gpsInfo.innerHTML = "";
+  dateInfo.innerHTML = "";
+  document.getElementById("confirmText").innerHTML = "";
+
+  //地図のマークを削除
+  if (marker) {
+  map.removeLayer(marker);
+  marker = null;
+  }
+
+  // 次へボタンを押せないようにする
+  nextBtn.disabled = true;
+
+  // STEP1へ戻る
+  showStep(1);
 
 });
