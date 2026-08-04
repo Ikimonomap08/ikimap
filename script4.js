@@ -60,6 +60,9 @@ function renderConfirm() {
 // 地図（STEP3のみ）
 // =========================
 function renderMap() {
+
+  
+
   if (!map) {
     map = L.map("map").setView(
       [observation.latitude, observation.longitude],
@@ -70,8 +73,11 @@ function renderMap() {
       attribution: "&copy; OpenStreetMap contributors"
     }).addTo(map);
   }
-
-  if (marker) map.removeLayer(marker);
+  
+    if (marker) {
+    map.removeLayer(marker);
+  }
+  
 
   marker = L.marker([
     observation.latitude,
@@ -296,6 +302,8 @@ newPostBtn.addEventListener("click", () => {
   map.removeLayer(marker);
   marker = null;
   }
+
+  marker = null;
 
   // 次へボタンを押せないようにする
   nextBtn.disabled = true;
