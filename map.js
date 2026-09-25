@@ -22,7 +22,7 @@ const supabaseClient =
 // 地図の作成
 // =====================================
 
-const map = L.map("map").setView([34.790, 136.078], 14);
+const map = L.map("map").setView([34.790815, 136.077805], 12);
 
 L.tileLayer(
   "https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png",
