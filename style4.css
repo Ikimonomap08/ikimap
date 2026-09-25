@@ -137,7 +137,7 @@ textarea:focus{
 }
 
 /* =========================
-   次へのボタン、投稿ボタン
+   次へのボタン★説明変更
 ========================= */
 
 button{
@@ -173,10 +173,52 @@ button:hover{
 
 }
 
+/* 以下変更点 */
+
+
+/* =========================
+   次へボタン
+   押せないときは薄い緑
+========================= */
+
+#nextBtn:disabled{
+
+    background: #BFD2B7;
+
+    color: #F8FBF6;
+
+    cursor: not-allowed;
+
+}
+
+
+/* =========================
+   現在地を取得するボタン
+   柔らかいオレンジ
+========================= */
+
+#getBrowserGpsBtn{
+
+    background: #E5A66A;
+
+}
+
+#getBrowserGpsBtn:hover{
+
+    background: #D99457;
+
+}
+
+/* =========================
+   投稿完了画面
+========================= */
 
 #step4 button {
     margin-top: 35px;
 }
+
+/* 変更終了 */
+
 
 /* =========================
    戻るボタン
@@ -205,4 +247,30 @@ button:hover{
     width: 180px;
     max-width: none;
     margin: 0;
+}
+
+/* =========================
+   日時入力欄
+========================= */
+#manualDateArea{
+    width: 90%;
+    max-width: 420px;
+    margin: 15px auto 20px;
+}
+
+#manualDateArea label{
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #40513B;
+}
+
+#manualDate{
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}
+
+#step4 button {
+    margin-top: 35px;
 }

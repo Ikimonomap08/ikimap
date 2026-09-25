@@ -11,8 +11,14 @@ const fileInfo = document.getElementById("fileInfo");
 const gpsInfo = document.getElementById("gpsInfo");
 const dateInfo = document.getElementById("dateInfo");
 const preview = document.getElementById("preview");
+const manualDateArea = document.getElementById("manualDateArea");
+const manualDate = document.getElementById("manualDate");
+const browserGpsArea = document.getElementById("browserGpsArea");
+const getBrowserGpsBtn = document.getElementById("getBrowserGpsBtn");
+const browserGpsInfo = document.getElementById("browserGpsInfo");
 
 const toStep3 = document.getElementById("toStep3");
+
 const SUPABASE_URL =  'https://otfqzespcsrlwiymhwrp.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Hjlkihfo2HLPFutdQo167g_DKXVu7Sa';
 
@@ -25,6 +31,24 @@ let map;
 let marker;
 let observation = {};
 let posting = false;
+
+// =========================
+// 次へボタンの状態確認
+// =========================
+
+function updateNextButton() {
+
+  const hasGps =
+    observation.latitude != null &&
+    observation.longitude != null;
+
+  const hasDate =
+    observation.observedAt != null &&
+    observation.observedAt !== "";
+
+  nextBtn.disabled =
+    !(hasGps && hasDate);
+}
 
 // =========================
 // STEP切り替え
@@ -60,8 +84,14 @@ function renderConfirm() {
 // 地図（STEP3のみ）
 // =========================
 function renderMap() {
-
-  
+  //位置情報なしverを追加
+  if (
+    observation.latitude == null ||
+    observation.longitude == null
+  ) {
+    console.log("位置情報がないため地図を表示できません");
+    return;
+  }
 
   if (!map) {
     map = L.map("map").setView(
@@ -72,9 +102,18 @@ function renderMap() {
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors"
     }).addTo(map);
+  } else {
+
+    map.setView(
+      [
+        observation.latitude,
+        observation.longitude
+      ],
+      16
+    );
   }
   
-    if (marker) {
+  if (marker) {
     map.removeLayer(marker);
   }
   
@@ -94,16 +133,24 @@ photoInput.addEventListener("change", function () {
   const file = this.files[0];
   if (!file) return;
 
+  // 前の写真の位置情報を消す
+  observation.latitude = null;
+  observation.longitude = null;
+  // ブラウザGPS表示をリセット
+  browserGpsArea.style.display = "none";
+  browserGpsInfo.innerHTML = "";
+  // GPSが決まるまでは次へを押せない
+  nextBtn.disabled = true;
+
   observation.file = file;
 
   const sizeMB = (file.size / 1024 / 1024).toFixed(2);
 
-  // ★STEP1で表示
-  fileInfo.innerHTML = `
-    ファイル名: ${file.name}<br>
     
-  `;
 
+  // =========================
+  // 写真プレビュー
+  // =========================
   const reader = new FileReader();
 
   reader.onload = function (e) {
@@ -111,6 +158,9 @@ photoInput.addEventListener("change", function () {
     //document.getElementById("preview").style.border = "5px solid red";
 
     console.log("プレビューセット完了");
+  // =========================
+  // EXIF取得
+  // =========================
     EXIF.getData(file, function () {
       const lat = EXIF.getTag(this, "GPSLatitude");
       const lon = EXIF.getTag(this, "GPSLongitude");
@@ -119,6 +169,9 @@ photoInput.addEventListener("change", function () {
       const lonRef = EXIF.getTag(this, "GPSLongitudeRef");
 
       const photoDate = EXIF.getTag(this, "DateTimeOriginal");
+  // =========================
+  // 撮影日時
+  // =========================
 
       observation.observedAt = photoDate;
 
@@ -130,11 +183,15 @@ photoInput.addEventListener("change", function () {
       } 
       else {
         observation.observedAt = null;
-        dateInfo.innerHTML = 
-        `撮影日：取得できませんでした`;
+        dateInfo.innerHTML = "";
       }
+      // EXIFから取得できなかった場合だけ
+      // 撮影日時の入力欄を表示
+      manualDateArea.style.display = "block";
+      manualDate.value = "";
 
-      if (lat && lon) {
+      // EXIFからGPS取得成功した場合
+        if (lat && lon) {
         observation.latitude =
           lat[0] + lat[1] / 60 + lat[2] / 3600;
 
@@ -144,26 +201,201 @@ photoInput.addEventListener("change", function () {
           gpsInfo.innerHTML = `
           緯度：${observation.latitude.toFixed(6)}<br>
           経度：${observation.longitude.toFixed(6)} `;
+        
+        browserGpsArea.style.display = "none";
+
+        // GPSが取れたので次へ進める
+              updateNextButton();
 
       }
 
+        // EXIFにGPSがない場合
       else {
-          gpsInfo.innerHTML = `
-          GPS情報：なし
-          `;
+       gpsInfo.innerHTML = "GPS情報：写真から取得できませんでした";
+       // 現在地取得エリアを表示
+       browserGpsArea.style.display = "block";
+       // 余計な案内文は表示しない
+       browserGpsInfo.innerHTML = "";
+
+       // まだ位置情報がないので進めない
+       nextBtn.disabled = true;
       }
 
-      nextBtn.disabled = false;
     });
   };
 
   reader.readAsDataURL(file);
 });
 
+// =========================
+// 撮影日時を手動入力
+// =========================
+
+manualDate.addEventListener(
+  "change",
+  function () {
+
+    if (this.value) {observation.observedAt = this.value;
+    } else { observation.observedAt = null;}
+
+    updateNextButton();
+  }
+);
+
+// =========================
+// ブラウザから現在地を取得
+// =========================
+
+getBrowserGpsBtn.addEventListener(
+  "click",
+  function () {
+
+    if (!navigator.geolocation) {
+
+      browserGpsInfo.innerHTML =
+        "このブラウザでは位置情報を取得できません。";
+
+      return;
+    }
+
+
+    browserGpsInfo.innerHTML =
+      "現在地を取得しています...";
+
+
+    getBrowserGpsBtn.disabled =
+      true;
+
+
+    navigator.geolocation.getCurrentPosition(
+
+      // =========================
+      // 取得成功
+      // =========================
+
+      function (position) {
+
+        observation.latitude =
+          position.coords.latitude;
+
+        observation.longitude =
+          position.coords.longitude;
+
+
+        gpsInfo.innerHTML = `
+          GPS：ブラウザの現在地から取得<br>
+          緯度：${observation.latitude.toFixed(6)}<br>
+          経度：${observation.longitude.toFixed(6)}
+        `;
+
+          // 現在地取得エリアを消す
+          browserGpsArea.style.display =
+            "none";
+
+
+          ;
+          // GPS取得成功
+          nextBtn.disabled =
+            false;
+
+
+      },
+
+
+      // =========================
+      // 取得失敗
+      // =========================
+
+      function (error) {
+
+        console.error(
+          "現在地取得エラー:",
+          error
+        );
+
+
+        getBrowserGpsBtn.disabled =
+          false;
+
+
+        if (
+          error.code ===
+          error.PERMISSION_DENIED
+        ) {
+
+          browserGpsInfo.innerHTML =
+            "位置情報の使用が許可されませんでした。<br>" +
+            "ブラウザの設定で位置情報を許可してください。";
+
+        }
+
+        else if (
+          error.code ===
+          error.POSITION_UNAVAILABLE
+        ) {
+
+          browserGpsInfo.innerHTML =
+            "現在地を取得できませんでした。";
+
+        }
+
+        else if (
+          error.code ===
+          error.TIMEOUT
+        ) {
+
+          browserGpsInfo.innerHTML =
+            "現在地の取得がタイムアウトしました。<br>" +
+            "もう一度お試しください。";
+
+        }
+
+        else {
+
+          browserGpsInfo.innerHTML =
+            "現在地の取得に失敗しました。";
+        }
+
+
+        nextBtn.disabled =
+          true;
+      },
+
+
+      // =========================
+      // 現在地取得設定
+      // =========================
+
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      }
+    );
+  }
+);
+
+
 // STEP1 → STEP2
-nextBtn.addEventListener("click", () => {
-  showStep(2);
-});
+nextBtn.addEventListener(
+  "click",
+  () => {
+
+    if (
+      observation.latitude == null ||
+      observation.longitude == null
+    ) {
+
+      alert(
+        "位置情報を取得してください"
+      );
+
+      return;
+    }
+
+    showStep(2);
+  }
+);
 
 // STEP2 → STEP1
 document.getElementById("backToStep1").addEventListener("click", () => {
@@ -208,6 +440,9 @@ postBtn.addEventListener("click", async() => {
 
   if (!file) {
     alert("写真が選択されていません");
+     posting = false;
+     postBtn.disabled = false;
+     postBtn.textContent = "投稿する";
     return;
   }
 
@@ -239,6 +474,7 @@ postBtn.addEventListener("click", async() => {
     .from("observations")
     .getPublicUrl(fileName);
 
+  // observationsテーブルへ保存
   const photoUrl = urlData.publicUrl;
     const { data, error } = await supabaseClient
     .from("observations")
@@ -295,15 +531,19 @@ newPostBtn.addEventListener("click", () => {
   fileInfo.innerHTML = "";
   gpsInfo.innerHTML = "";
   dateInfo.innerHTML = "";
+  manualDateArea.style.display = "none";
+  manualDate.value = "";
   document.getElementById("confirmText").innerHTML = "";
+  //ブラウザのGPSもリセット
+  browserGpsArea.style.display = "none";
+  browserGpsInfo.innerHTML = "";
+  getBrowserGpsBtn.disabled = false;
 
   //地図のマークを削除
   if (marker) {
   map.removeLayer(marker);
   marker = null;
   }
-
-  marker = null;
 
   // 次へボタンを押せないようにする
   nextBtn.disabled = true;

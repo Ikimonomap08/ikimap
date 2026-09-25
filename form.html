@@ -37,8 +37,38 @@ href="https://unpkg.com/leaflet/dist/leaflet.css">
        accept="image/*">
        
  <p id="fileInfo"></p>
- <p id="gpsInfo"></p>
+
  <p id="dateInfo"></p>
+ <!-- 撮影日時を取得できなかった場合だけ表示 -->
+ <div id="manualDateArea" style="display:none;">
+
+ <label for="manualDate">📅撮影日時</label>
+ <input
+    type="datetime-local"
+    id="manualDate"
+  >
+
+ </div>
+
+ <p id="gpsInfo"></p>
+ <!-- =========================
+      EXIFから位置情報が取れなかった場合
+      ブラウザから現在地を取得
+ ========================= -->
+
+ <div id="browserGpsArea" style="display:none;">
+  
+   <button
+     id="getBrowserGpsBtn"
+     type="button"
+   >
+     現在地を取得する
+   </button>
+
+   <p id="browserGpsInfo"></p>
+
+ </div>
+
  <img id="preview">
  
  <button id="nextBtn" disabled>次へ</button>
@@ -59,8 +89,10 @@ href="https://unpkg.com/leaflet/dist/leaflet.css">
     <label>カテゴリー <span class="required">必須</span></label>
     <select id="category">
       <option value="bird">🐦 鳥</option>
-      <option value="bug">🐛 虫</option>
       <option value="fish">🐟 魚</option>
+      <option value="bug">🐛 虫</option>
+      <option value="reptile">🦎 は虫類</option>
+      <option value="amphibian">🐸 両生類</option>
       <option value="animal">🐾 動物</option>
       <option value="plant">🌱 植物</option>
       <option value="other">❓ その他</option>
@@ -90,18 +122,17 @@ href="https://unpkg.com/leaflet/dist/leaflet.css">
   <h3>📝 確認画面</h3>
 
   
-  <p id="fileInfo"></p>
-  <p id="gpsInfo"></p>
-  <p id="dateInfo"></p>
-
-  <p id="confirmText"></p>
+ <p id="confirmFileInfo"></p>
+ <p id="confirmGpsInfo"></p>
+ <p id="confirmDateInfo"></p>
+ <p id="confirmText"></p>
 
   <div id="map" style="height:300px;"></div>
 
-  <div class="buttonRow">
+ <div class="buttonRow">
   <button id="backToStep2" class="backBtn">戻る</button>
   <button id="postBtn">投稿する</button>
-  </div>
+ </div>
 </div>
 
 <!-- STEP4（投稿完了） -->
