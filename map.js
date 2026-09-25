@@ -17,317 +17,197 @@ const supabaseClient =
   );
 
 
+
 // =====================================
 // 地図の作成
 // =====================================
 
-const map =
-
-  L.map("map")
-
-    .setView(
-
-      // 最初に表示する場所
-      // 三重県周辺
-
-      [34.5, 136.8],
-
-      // ズームレベル
-
-      9
-
-    );
-
-
-// =====================================
-// 地理院地図を表示
-// =====================================
+const map = L.map("map").setView([34.5, 136.8], 9);
 
 L.tileLayer(
-
   "https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png",
-
   {
-
     attribution:
-
       '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>'
-
   }
-
-)
-
-.addTo(map);
+).addTo(map);
 
 
 // =====================================
-// マーカーを保存する
+// マーカーを保存
 // =====================================
-
-// 後で更新・削除するときに使う
 
 const markers = new Map();
 
 
 // =====================================
-// Supabaseから現在のデータを取得
+// 初期表示：位置情報だけ取得
 // =====================================
 
 async function loadInitialObservations() {
 
-
-  const {
-
-    data,
-
-    error
-
-  } =
-
-    await supabaseClient
-
-      .from("observations")
-
-      .select("*")
-      .eq("approved", true)
-      .order("observedAt", { ascending: false });
-
-
-  // エラーがあった場合
+  const { data, error } = await supabaseClient
+    .from("observations")
+    .select("id, latitude, longitude")
+    .eq("approved", true);
 
   if (error) {
-  console.error(
-    "データ取得エラー：",
-    error
-  );
-
-  return;
-  } 
+    console.error("データ取得エラー：", error);
+    return;
+  }
 
   console.log("取得件数：", data.length);
-  console.log("取得データ：", data);
 
-
-  console.log(
-
-    "現在の観察データ：",
-
-    data
-
-  );
-
-
-  // 取得したデータを1件ずつ処理
-
-  data.forEach(
-
-    observation => {
-
-      console.log(
-      "処理中の観察データ：",
-      observation
-      );
-
-      addObservationMarker(
-
-        observation
-
-      );
-
-    }
-
-  );
-
+  data.forEach(observation => {
+    addObservationMarker(observation);
+  });
 }
 
 
 // =====================================
-// 観察データ1件のマーカーを追加
+// マーカーを追加
 // =====================================
 
-function addObservationMarker(
+function addObservationMarker(observation) {
 
-  observation
-
-) {
-
-
-  // 緯度
-
-  const latitude =
-
-    parseFloat(
-
-      observation.latitude
-
-    );
-
-
-  // 経度
-
-  const longitude =
-
-    parseFloat(
-
-      observation.longitude
-
-    );
-
-
-  // 緯度・経度が正しくない場合
+  const latitude = Number(observation.latitude);
+  const longitude = Number(observation.longitude);
 
   if (
-
-    isNaN(latitude) ||
-
-    isNaN(longitude)
-
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
   ) {
-
-    console.warn(
-
-      "緯度経度が不正です：",
-
-      observation
-
-    );
-
+    console.warn("緯度経度が不正です：", observation);
     return;
-
   }
 
+  // 同じ投稿のマーカーがあれば重複させない
+  if (markers.has(observation.id)) {
+    return;
+  }
 
-  // =====================================
-  // ポップアップ内容
-  // =====================================
+  const marker = L.marker([
+    latitude,
+    longitude
+  ]).addTo(map);
 
-  const popupContent = `
+  // 最初は写真も詳細情報も読み込まない
+  marker.bindPopup("投稿情報を読み込み中...");
 
-    <div class="popup-content">
+  // マーカーをクリックしてポップアップが開いたとき
+  marker.on("popupopen", () => {
+    loadObservationDetails(observation.id, marker);
+  });
 
-
-      <h3>
-
-        ${observation.speciesName || "種名不明"}
-
-      </h3>
-
-
-      ${
-        observation.photo_url
-
-        ?
-
-        `
-
-          <img
-
-            src="${observation.photo_url}"
-
-            class="popup-image"
-
-          >
-
-        `
-
-        :
-
-        ""
-
-      }
+  markers.set(observation.id, marker);
+}
 
 
-      <p>
+// =====================================
+// クリック時：投稿の詳細と写真を取得
+// =====================================
 
-        <strong>観察者：</strong>
+async function loadObservationDetails(id, marker) {
 
-        ${observation.observer || "不明"}
+  // すでに読み込み済みなら再取得しない
+  if (marker.observationDetails) {
+    showObservationPopup(
+      marker,
+      marker.observationDetails
+    );
+    return;
+  }
 
-      </p>
+  marker.setPopupContent("投稿情報を読み込み中...");
 
-
-      <p>
-
-        <strong>カテゴリ：</strong>
-
-        ${observation.category || "不明"}
-
-      </p>
-
-
-      <p>
-
-        <strong>観察日時：</strong>
-
-        ${observation.observedAt || "不明"}
-
-      </p>
-
-
-      <p>
-
-        <strong>コメント：</strong><br>
-
-        ${observation.comment || "なし"}
-
-      </p>
-
-
-    </div>
-
-  `;
-
-
-  // =====================================
-  // マーカーを作成
-  // =====================================
-
-  const marker =
-
-    L.marker(
-
-      [
-
-        latitude,
-
-        longitude
-
-      ]
-
+  const { data, error } = await supabaseClient
+    .from("observations")
+    .select(
+      "id, speciesName, observer, category, observedAt, comment, photo_url"
     )
+    .eq("id", id)
+    .eq("approved", true)
+    .maybeSingle();
 
-      .addTo(map)
+  if (error) {
+    console.error("詳細取得エラー：", error);
+    marker.setPopupContent("投稿情報を取得できませんでした");
+    return;
+  }
+
+  if (!data) {
+    marker.setPopupContent("この投稿は表示できません");
+    return;
+  }
+
+  // 詳細情報を保存
+  marker.observationDetails = data;
+
+  showObservationPopup(marker, data);
+}
 
 
-      .bindPopup(
+// =====================================
+// ポップアップを表示
+// =====================================
 
-        popupContent
+function showObservationPopup(marker, observation) {
 
-      );
+  const container = document.createElement("div");
+  container.className = "popup-content";
 
+  // 種名
+  const title = document.createElement("h3");
+  title.textContent = observation.speciesName || "種名不明";
+  container.appendChild(title);
 
-  // =====================================
-  // マーカーを保存
-  // =====================================
+  // 写真がある場合だけ画像を読み込む
+  if (observation.photo_url) {
 
-  // idを使って保存
+    const image = document.createElement("img");
 
-  if (
+    image.className = "popup-image";
+    image.alt = observation.speciesName || "観察写真";
+    image.loading = "lazy";
 
-    observation.id
+    image.onerror = () => {
+      image.alt = "写真を読み込めませんでした";
+      image.style.display = "none";
+    };
 
-  ) {
+    image.src = observation.photo_url;
 
-    markers.set(
+    container.appendChild(image);
+  }
 
-      observation.id,
+  // 詳細情報
+  const details = [
+    ["観察者", observation.observer || "不明"],
+    ["カテゴリ", observation.category || "不明"],
+    ["観察日時", observation.observedAt || "不明"],
+    ["コメント", observation.comment || "なし"]
+  ];
 
-      marker
+  details.forEach(([label, value]) => {
 
+    const paragraph = document.createElement("p");
+    const strong = document.createElement("strong");
+
+    strong.textContent = label + "：";
+
+    paragraph.appendChild(strong);
+    paragraph.appendChild(
+      document.createTextNode(value)
     );
 
-  }
+    container.appendChild(paragraph);
+  });
 
+  marker.setPopupContent(container);
 }
 
 
@@ -337,58 +217,27 @@ function addObservationMarker(
 
 function subscribeToObservations() {
 
-
   supabaseClient
-
-    .channel(
-
-      "observations-changes"
-
-    )
-
-
+    .channel("observations-changes")
     .on(
-
       "postgres_changes",
-
       {
-
         event: "INSERT",
-
         schema: "public",
-
         table: "observations"
-
       },
-
-
       payload => {
 
+        const observation = payload.new;
 
-        console.log(
-
-          "新しい観察データ：",
-
-          payload.new
-
-        );
-
-
-        // 新しい1件だけを地図に追加
-
-        addObservationMarker(
-
-          payload.new
-
-        );
+        // 承認済みの投稿だけ地図に追加
+        if (observation.approved === true) {
+          addObservationMarker(observation);
+        }
 
       }
-
     )
-
-
     .subscribe();
-
 }
 
 
@@ -396,12 +245,5 @@ function subscribeToObservations() {
 // 実行
 // =====================================
 
-
-// ① 現在すでに入っているデータを表示
-
 loadInitialObservations();
-
-
-// ② その後、新しい投稿を監視
-
 subscribeToObservations();
