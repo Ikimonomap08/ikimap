@@ -184,11 +184,12 @@ photoInput.addEventListener("change", function () {
       else {
         observation.observedAt = null;
         dateInfo.innerHTML = "";
+        // EXIFから取得できなかった場合だけ
+        // 撮影日時の入力欄を表示
+        manualDateArea.style.display = "block";
+        manualDate.value = "";
       }
-      // EXIFから取得できなかった場合だけ
-      // 撮影日時の入力欄を表示
-      manualDateArea.style.display = "block";
-      manualDate.value = "";
+     
 
       // EXIFからGPS取得成功した場合
         if (lat && lon) {
